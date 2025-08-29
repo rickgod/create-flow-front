@@ -4,7 +4,14 @@ import router from "./router";
 import store from "./store";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
-import './mock/index.js';
+
+// 根据环境条件加载Mock
+if (process.env.VUE_APP_ENV === 'local') {
+  console.log('本地环境，加载Mock配置...')
+  require('./mock/index.js')
+} else {
+  console.log('非本地环境，跳过Mock配置...')
+}
 
 // 环境信息
 console.log('=== 环境信息 ===');
