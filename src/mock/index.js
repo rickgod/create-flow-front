@@ -118,23 +118,27 @@ Mock.mock('/api/flow/project/query', 'post', (options) => {
   }
 })
 
-// 新增项目 - 修改路径为/flow/project/add
+// 新增项目 - 修改为/flow/project/add，接收ProjectBO格式
 Mock.mock('/api/flow/project/add', 'post', (options) => {
-  console.log('Mock 拦截到 POST 请求:', options.body)
+  console.log('Mock 拦截到 POST 请求:', options.url)
+  console.log('Mock 请求体:', options.body)
 
-  const newProject = JSON.parse(options.body)
+  const projectBO = JSON.parse(options.body)
+  console.log('新增项目数据:', projectBO)
+
   const id = projectDatabase.length + 1
 
+  // 构造ProjectVO格式的返回数据
   const project = {
-    id,
-    projectName: newProject.projectName,
+    id: id,
+    projectName: projectBO.projectName,
     icon: {
-      id: `icon${id}`,
+      id: projectBO.iconImageId || `icon${id}`,
       fileName: `project-icon-${id}.png`,
-      fileUrl: newProject.projectIcon
+      fileUrl: projectBO.iconImageId ? `https://via.placeholder.com/40x40/409EFF/FFFFFF?text=${projectBO.projectName.charAt(0)}` : `https://via.placeholder.com/40x40/409EFF/FFFFFF?text=${projectBO.projectName.charAt(0)}`
     },
-    productId: newProject.productId,
-    productName: newProject.productName,
+    productId: projectBO.productId,
+    productName: projectBO.productName,
     createdBy: "当前用户",
     createdTime: new Date().toLocaleString()
   }
@@ -144,31 +148,32 @@ Mock.mock('/api/flow/project/add', 'post', (options) => {
   return {
     code: 200,
     message: '添加成功',
-    data: project
+    data: project  // 返回ProjectVO格式
   }
 })
 
-// 编辑项目 - 修改路径为/flow/project/edit
+// 编辑项目 - 修改为/flow/project/edit，接收ProjectBO格式
 Mock.mock('/api/flow/project/edit', 'put', (options) => {
   console.log('Mock 拦截到 PUT 请求:', options.url)
   console.log('PUT 请求体:', options.body)
 
-  const updateData = JSON.parse(options.body)
-  const id = updateData.id
+  const projectBO = JSON.parse(options.body)
+  console.log('编辑项目数据:', projectBO)
 
+  const id = projectBO.id
   console.log('要编辑的项目ID:', id)
-  console.log('更新数据:', updateData)
 
   const index = projectDatabase.findIndex(item => item.id === id)
   if (index !== -1) {
-    // 更新数据，但保持项目名称和产品ID不变
+    // 更新数据，保持项目名称和产品ID不变
     projectDatabase[index] = {
       ...projectDatabase[index],
       icon: {
         ...projectDatabase[index].icon,
-        fileUrl: updateData.projectIcon
+        id: projectBO.iconImageId || projectDatabase[index].icon.id,
+        fileUrl: projectBO.iconImageId ? `https://via.placeholder.com/40x40/409EFF/FFFFFF?text=${projectDatabase[index].projectName.charAt(0)}` : projectDatabase[index].icon.fileUrl
       },
-      productName: updateData.productName
+      productName: projectBO.productName
     }
 
     console.log('编辑成功，更新后的数据:', projectDatabase[index])
@@ -176,7 +181,7 @@ Mock.mock('/api/flow/project/edit', 'put', (options) => {
     return {
       code: 200,
       message: '编辑成功',
-      data: projectDatabase[index]
+      data: projectDatabase[index]  // 返回ProjectVO格式
     }
   } else {
     console.log('项目不存在，ID:', id)
@@ -188,8 +193,8 @@ Mock.mock('/api/flow/project/edit', 'put', (options) => {
   }
 })
 
-// 删除项目 - 修改路径为/flow/project/:id
-Mock.mock('/api/flow/project/:id', 'delete', (options) => {
+// 删除项目 - 修改为/flow/project/{id}
+Mock.mock(/\/api\/flow\/project\/\d+/, 'delete', (options) => {
   console.log('Mock 拦截到 DELETE 请求:', options.url)
 
   // 从URL中提取ID
@@ -204,19 +209,25 @@ Mock.mock('/api/flow/project/:id', 'delete', (options) => {
   }
   const id = parseInt(idMatch[1])
 
+  console.log('要删除的项目ID:', id)
+
   const index = projectDatabase.findIndex(item => item.id === id)
   if (index !== -1) {
     projectDatabase.splice(index, 1)
+    console.log('删除成功，剩余项目数量:', projectDatabase.length)
     return {
       code: 200,
       message: '删除成功',
-      data: null
+      data: true,
+      timestamp: new Date().toLocaleString(),
+      success: true
     }
   } else {
+    console.log('项目不存在，ID:', id)
     return {
       code: 404,
       message: '项目不存在',
-      data: null
+      data: false
     }
   }
 })

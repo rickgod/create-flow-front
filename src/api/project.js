@@ -44,17 +44,17 @@ export const projectApi = {
     return api.post('/flow/project/query', queryDTO)
   },
 
-  // 新增项目 - 修改路径为/flow/project/add
-  createProject(data) {
-    return api.post('/flow/project/add', data)
+  // 新增项目 - 修改为传递ProjectBO格式的数据
+  createProject(projectBO) {
+    return api.post('/flow/project/add', projectBO)
   },
 
-  // 编辑项目 - 修改路径为/flow/project/edit
-  updateProject(id, data) {
-    return api.put('/flow/project/edit', data)
+  // 编辑项目 - 修改为传递ProjectBO格式的数据
+  updateProject(projectBO) {
+    return api.put('/flow/project/edit', projectBO)
   },
 
-  // 删除项目 - 修改路径为/flow/project/{id}
+  // 删除项目 - 修改为传递id参数
   deleteProject(id) {
     return api.delete(`/flow/project/${id}`)
   }

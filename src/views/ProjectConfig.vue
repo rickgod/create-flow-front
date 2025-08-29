@@ -107,7 +107,7 @@
           />
         </el-form-item>
 
-        <el-form-item label="项目Icon" prop="projectIcon" required>
+        <el-form-item label="项目Icon" prop="iconImageId" required>
           <div class="upload-section">
             <el-upload
               class="avatar-uploader"
@@ -116,8 +116,8 @@
               :before-upload="beforeAvatarUpload"
               accept="image/*"
             >
-              <div v-if="form.projectIcon" class="image-preview">
-                <img :src="form.projectIcon" class="avatar" />
+              <div v-if="form.previewUrl" class="image-preview">
+                <img :src="form.previewUrl" class="avatar" />
                 <div class="image-overlay">
                   <el-icon><Plus /></el-icon>
                   <span>重新上传</span>
@@ -129,6 +129,9 @@
               </div>
             </el-upload>
             <div class="upload-tip">只能上传图片文件</div>
+            <div v-if="form.iconImageId" class="image-id">
+              图片ID: {{ form.iconImageId }}
+            </div>
           </div>
         </el-form-item>
 
@@ -186,13 +189,14 @@ export default {
     const total = ref(0);
     const projectList = ref([]);
 
-    // 表单数据（新增和编辑共用）
+    // 表单数据（新增和编辑共用）- 修改为ProjectBO格式
     const form = reactive({
       id: "",
       projectName: "",
-      projectIcon: "",
+      iconImageId: "",  // 改为iconImageId，符合ProjectBO
       productName: "",
       productId: "",
+      previewUrl: "",   // 用于预览显示
     });
 
     // 表单验证规则
@@ -200,7 +204,7 @@ export default {
       projectName: [
         { required: true, message: "请输入项目名称", trigger: "blur" },
       ],
-      projectIcon: [
+      iconImageId: [
         { required: true, message: "请上传项目Icon", trigger: "change" },
       ],
       productName: [
@@ -221,13 +225,14 @@ export default {
     const handleEdit = (row) => {
       isEdit.value = true;
       dialogVisible.value = true;
-      // 填充表单数据
+      // 填充表单数据，转换为ProjectBO格式
       Object.assign(form, {
         id: row.id,
         projectName: row.projectName,
-        projectIcon: row.icon.fileUrl, // 修改为icon.fileUrl
+        iconImageId: row.icon.id,  // 使用icon.id
         productName: row.productName,
         productId: row.productId,
+        previewUrl: row.icon.fileUrl,  // 设置预览URL
       });
     };
 
@@ -241,6 +246,7 @@ export default {
         form[key] = "";
       });
       form.id = "";
+      form.previewUrl = "";  // 重置预览URL
     };
 
     const beforeAvatarUpload = (file) => {
@@ -262,7 +268,11 @@ export default {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        form.projectIcon = reader.result;
+        // 这里可以上传文件到服务器，获取文件ID
+        // 暂时使用模拟的图片ID
+        form.iconImageId = `icon_${Date.now()}`;
+        // 同时保存预览URL用于显示
+        form.previewUrl = reader.result;
       };
 
       return false; // 阻止自动上传
@@ -271,8 +281,16 @@ export default {
     const handleSubmit = async () => {
       try {
         if (isEdit.value) {
-          // 编辑项目
-          const response = await projectApi.updateProject(form.id, form);
+          // 编辑项目 - 传递ProjectBO格式
+          const projectBO = {
+            id: form.id,
+            projectName: form.projectName,
+            iconImageId: form.iconImageId,
+            productName: form.productName,
+            productId: form.productId
+          };
+
+          const response = await projectApi.updateProject(projectBO);
           if (response.code === 200) {
             ElMessage.success('项目编辑成功');
             dialogVisible.value = false;
@@ -280,8 +298,15 @@ export default {
             resetForm();
           }
         } else {
-          // 新增项目
-          const response = await projectApi.createProject(form);
+          // 新增项目 - 传递ProjectBO格式
+          const projectBO = {
+            projectName: form.projectName,
+            iconImageId: form.iconImageId,
+            productName: form.productName,
+            productId: form.productId
+          };
+
+          const response = await projectApi.createProject(projectBO);
           if (response.code === 200) {
             ElMessage.success('项目添加成功');
             dialogVisible.value = false;
@@ -515,6 +540,13 @@ export default {
   font-size: 12px;
   color: #909399;
   margin-top: 8px;
+}
+
+.image-id {
+  font-size: 12px;
+  color: #409eff;
+  margin-top: 8px;
+  font-weight: bold;
 }
 
 /* 表格样式优化 */
