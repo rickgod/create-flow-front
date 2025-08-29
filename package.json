@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "serve": "vue-cli-service serve --mode local",
+    "serve:local": "vue-cli-service serve --mode local",
+    "serve:test": "vue-cli-service serve --mode test",
+    "serve:dev": "vue-cli-service serve --mode development",
+    "serve:prod": "vue-cli-service serve --mode production"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.11.0",
     "core-js": "^3.8.3",
     "dayjs": "^1.11.15",
-    "element-plus": "^2.11.1",
+    "element-plus": "^2.3.8",
+    "mockjs": "^1.1.0",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
     "vuex": "^4.0.0"
