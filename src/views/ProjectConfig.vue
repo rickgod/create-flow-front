@@ -39,11 +39,15 @@
       <el-table-column prop="icon.fileUrl" label="项目Icon" width="100">
         <template #default="scope">
           <el-image
+            v-if="scope.row.icon && scope.row.icon.fileUrl"
             :src="scope.row.icon.fileUrl"
             style="width: 40px; height: 40px"
             fit="cover"
             :preview-src-list="[scope.row.icon.fileUrl]"
           />
+          <div v-else style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; color: #999;">
+            无图标
+          </div>
         </template>
       </el-table-column>
 
@@ -225,14 +229,14 @@ export default {
     const handleEdit = (row) => {
       isEdit.value = true;
       dialogVisible.value = true;
-      // 填充表单数据，转换为ProjectBO格式
+      // 填充表单数据，添加空值检查
       Object.assign(form, {
         id: row.id,
         projectName: row.projectName,
-        iconImageId: row.icon.id,  // 使用icon.id
+        iconImageId: row.icon && row.icon.id ? row.icon.id : '',
         productName: row.productName,
         productId: row.productId,
-        previewUrl: row.icon.fileUrl,  // 设置预览URL
+        previewUrl: row.icon && row.icon.fileUrl ? row.icon.fileUrl : '',
       });
     };
 
@@ -270,7 +274,7 @@ export default {
       reader.onload = () => {
         // 这里可以上传文件到服务器，获取文件ID
         // 暂时使用模拟的图片ID
-        form.iconImageId = `icon_${Date.now()}`;
+        form.iconImageId = Date.now(); // 直接使用数字
         // 同时保存预览URL用于显示
         form.previewUrl = reader.result;
       };
@@ -278,10 +282,11 @@ export default {
       return false; // 阻止自动上传
     };
 
+    // 提交表单 - 修改为使用新的增删改接口
     const handleSubmit = async () => {
       try {
         if (isEdit.value) {
-          // 编辑项目 - 传递ProjectBO格式
+          // 编辑项目 - 使用PUT /flow/project/edit
           const projectBO = {
             id: form.id,
             projectName: form.projectName,
@@ -290,15 +295,15 @@ export default {
             productId: form.productId
           };
 
-          const response = await projectApi.updateProject(projectBO);
-          if (response.code === 200) {
+          const response = await projectApi.editProject(projectBO);  // 编辑
+          if (response.success) {
             ElMessage.success('项目编辑成功');
             dialogVisible.value = false;
-            loadData(); // 重新加载数据
+            loadData();
             resetForm();
           }
         } else {
-          // 新增项目 - 传递ProjectBO格式
+          // 新增项目 - 使用POST /flow/project/add
           const projectBO = {
             projectName: form.projectName,
             iconImageId: form.iconImageId,
@@ -306,11 +311,11 @@ export default {
             productId: form.productId
           };
 
-          const response = await projectApi.createProject(projectBO);
-          if (response.code === 200) {
+          const response = await projectApi.addProject(projectBO);  // 新增
+          if (response.success) {
             ElMessage.success('项目添加成功');
             dialogVisible.value = false;
-            loadData(); // 重新加载数据
+            loadData();
             resetForm();
           }
         }
@@ -319,6 +324,7 @@ export default {
       }
     };
 
+    // 删除项目 - 修改为使用新的删除接口
     const handleDelete = async (row) => {
       try {
         await ElMessageBox.confirm("确定要删除这个项目吗？", "提示", {
@@ -328,9 +334,9 @@ export default {
         });
 
         const response = await projectApi.deleteProject(row.id);
-        if (response.code === 200) {
+        if (response.success) {
           ElMessage.success('删除成功');
-          loadData(); // 重新加载数据
+          loadData();
         }
       } catch (error) {
         if (error !== 'cancel') {
@@ -356,17 +362,20 @@ export default {
     };
 
     // 加载数据 - 修改为使用POST方法传递查询对象
+    // 加载数据 - 修改为使用新的查询接口
     const loadData = async () => {
       loading.value = true;
       try {
-        // 构造查询条件，符合ProjectQueryDTO格式
+        // 构造查询条件，符合PageQuery<ProjectQueryDTO>格式
         const queryDTO = {
-          projectName: searchKeyword.value || '', // 项目名称搜索
-          current: currentPage.value,
-          size: pageSize.value
+          pageNum: currentPage.value,
+          pageSize: pageSize.value,
+          queryParams: {
+            projectName: searchKeyword.value || ''
+          }
         };
 
-        const response = await projectApi.getProjects(queryDTO);
+        const response = await projectApi.queryProjects(queryDTO);
         if (response.success) {
           projectList.value = response.data.records; // 使用records字段
           total.value = response.data.total;

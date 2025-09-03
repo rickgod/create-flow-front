@@ -4,7 +4,14 @@ module.exports = defineConfig({
   // 控制前端页面的地址和端口
   devServer: {
     port: 8082,           // 前端服务端口
-    host: 'localhost',     // 前端服务地址
+    host: '0.0.0.0',      // 前端服务地址localhost
+    // 指定允许的 host
+    allowedHosts: [
+      'selfwork.createflow-test.com',
+      'localhost',
+      '127.0.0.1',
+      '192.168.192.1'
+    ],
   },
 
   // 添加 Webpack 配置解决模块兼容性问题

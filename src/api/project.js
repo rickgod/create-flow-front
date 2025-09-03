@@ -39,22 +39,22 @@ api.interceptors.response.use(
 )
 
 export const projectApi = {
-  // 查询项目列表 - 修改为POST方法，路径为/flow/project/query
-  getProjects(queryDTO) {
+  // 查询项目列表 - 使用新的查询接口
+  queryProjects(queryDTO) {
     return api.post('/flow/project/query', queryDTO)
   },
 
-  // 新增项目 - 修改为传递ProjectBO格式的数据
-  createProject(projectBO) {
+  // 新增项目 - 使用新的新增接口
+  addProject(projectBO) {
     return api.post('/flow/project/add', projectBO)
   },
 
-  // 编辑项目 - 修改为传递ProjectBO格式的数据
-  updateProject(projectBO) {
+  // 编辑项目 - 使用新的编辑接口
+  editProject(projectBO) {
     return api.put('/flow/project/edit', projectBO)
   },
 
-  // 删除项目 - 修改为传递id参数
+  // 删除项目 - 使用新的删除接口
   deleteProject(id) {
     return api.delete(`/flow/project/${id}`)
   }
